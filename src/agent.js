@@ -90,7 +90,7 @@ async function login(page) {
     // Navigate to login page
     await page.goto(config.loginUrl, { 
       waitUntil: 'networkidle',
-      timeout: 30000 
+      timeout: 60000 
     });
     
     // Handle cookie consent if present
