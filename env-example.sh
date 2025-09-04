@@ -15,7 +15,7 @@ LOG_LEVEL=info
 # WordPress Configuration (if TARGET=wp)
 WP_BASE_URL=http://ricondizionati.shop
 WP_USER=riparazionidigitali.srls@gmail.com
-WP_APP_PASS=Carlo19791979!!!
+WP_APP_PASS=Carlo19791979!!
 WP_UPLOAD_PATH=/wp-content/uploads/ingrosmart/
 WP_DEST_FILE=ingrosmart_catalog.csv
 
