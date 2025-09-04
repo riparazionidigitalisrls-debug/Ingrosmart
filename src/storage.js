@@ -139,41 +139,49 @@ async function saveToFileSystem(buffer, filename, isHistory = false) {
 }
 
 /**
- * Main delivery function
+ * Main delivery function - OTTIMIZZATA PER 2 BACKUP ALTERNATI
  */
 export async function deliver(buffer, timestamp) {
   const target = process.env.TARGET || 'fs';
-  const historyFilename = `ingrosmart-${timestamp}.csv`;
   const catalogFilename = process.env.WP_DEST_FILE || 'ingrosmart_catalog.csv';
   
+  // MODIFICA: Usa solo 2 file di backup che si alternano
+  // Se siamo nei primi 30 minuti dell'ora usa backup_1, altrimenti backup_2
+  const currentMinute = new Date().getMinutes();
+  const backupSlot = currentMinute < 30 ? '1' : '2';
+  const historyFilename = `ingrosmart_backup_${backupSlot}.csv`;
+  
   logger.info(`Delivering to target: ${target}`);
+  logger.info(`Using backup slot: ${backupSlot} (minute ${currentMinute})`);
   
   try {
     switch (target) {
       case 'wp':
-        // Upload fixed file
+        // Upload file principale (sempre sovrascritto)
         await uploadToWordPress(buffer, catalogFilename);
-        // Upload historical file
+        
+        // Upload file di backup (alterna tra backup_1 e backup_2)
         await uploadToWordPress(buffer, historyFilename);
+        
+        logger.info(`Files updated: ${catalogFilename} and ${historyFilename}`);
         break;
         
       case 's3':
-        // Upload fixed file
+        // Per S3 usa la stessa logica
         await uploadToS3(buffer, catalogFilename, false);
-        // Upload historical file
         await uploadToS3(buffer, historyFilename, true);
         break;
         
       case 'fs':
       default:
-        // Save fixed file
+        // Per filesystem locale usa la stessa logica
         await saveToFileSystem(buffer, catalogFilename, false);
-        // Save historical file
         await saveToFileSystem(buffer, historyFilename, true);
         break;
     }
     
     logger.info('Delivery completed successfully');
+    logger.info(`Total files on server: 3 (main + 2 rotating backups)`);
   } catch (error) {
     logger.error('Delivery failed:', error);
     throw error;
@@ -181,127 +189,23 @@ export async function deliver(buffer, timestamp) {
 }
 
 /**
- * Prune old history files
+ * Prune old history files - SEMPLIFICATA perché ora usiamo solo 2 backup
  */
 export async function pruneHistory(target, keepCount) {
-  if (keepCount <= 0) return;
-  
-  logger.debug(`Pruning history, keeping last ${keepCount} files`);
-  
-  try {
-    switch (target) {
-      case 's3':
-        await pruneS3History(keepCount);
-        break;
-        
-      case 'fs':
-        await pruneLocalHistory(keepCount);
-        break;
-        
-      case 'wp':
-        // WordPress pruning would need server-side implementation
-        logger.debug('History pruning not implemented for WordPress target');
-        break;
-    }
-  } catch (error) {
-    logger.warn('History pruning failed:', error.message);
-    // Don't fail the main process for pruning errors
-  }
+  // Non serve più fare pulizia perché usiamo solo 2 file di backup alternati
+  logger.debug('History pruning not needed with rotating backup system');
+  return;
 }
 
 /**
- * Prune local filesystem history
+ * Funzioni di pulizia legacy (mantenute per compatibilità ma non usate)
  */
 async function pruneLocalHistory(keepCount) {
-  const historyDir = path.join(__dirname, '..', 'output', 'history');
-  
-  try {
-    const files = await fs.readdir(historyDir);
-    const csvFiles = files
-      .filter(f => f.startsWith('ingrosmart-') && f.endsWith('.csv'))
-      .sort()
-      .reverse();
-    
-    if (csvFiles.length > keepCount) {
-      const toDelete = csvFiles.slice(keepCount);
-      
-      for (const file of toDelete) {
-        const filePath = path.join(historyDir, file);
-        await fs.unlink(filePath);
-        logger.debug(`Deleted old history file: ${file}`);
-      }
-      
-      logger.info(`Pruned ${toDelete.length} old history files`);
-    }
-  } catch (error) {
-    if (error.code !== 'ENOENT') {
-      throw error;
-    }
-  }
+  // Non più necessaria con il nuovo sistema
+  logger.debug('Local pruning skipped - using rotating backups');
 }
 
-/**
- * Prune S3 history
- */
 async function pruneS3History(keepCount) {
-  const s3Config = {
-    endpoint: process.env.S3_ENDPOINT,
-    region: process.env.S3_REGION || 'us-east-1',
-    bucket: process.env.S3_BUCKET,
-    accessKey: process.env.S3_ACCESS_KEY,
-    secretKey: process.env.S3_SECRET_KEY,
-    keyPrefixHistory: process.env.S3_KEY_PREFIX_HISTORY || 'ingrosmart/history/'
-  };
-  
-  if (!s3Config.endpoint || !s3Config.bucket) {
-    return;
-  }
-  
-  const client = new S3Client({
-    endpoint: s3Config.endpoint,
-    region: s3Config.region,
-    credentials: {
-      accessKeyId: s3Config.accessKey,
-      secretAccessKey: s3Config.secretKey
-    },
-    // Only use forcePathStyle for S3-compatible services (not AWS)
-    forcePathStyle: !s3Config.endpoint.includes('amazonaws.com')
-  });
-  
-  // List objects in history prefix
-  const listCommand = new ListObjectsV2Command({
-    Bucket: s3Config.bucket,
-    Prefix: s3Config.keyPrefixHistory,
-    MaxKeys: 1000
-  });
-  
-  const listResponse = await client.send(listCommand);
-  
-  if (!listResponse.Contents || listResponse.Contents.length <= keepCount) {
-    return;
-  }
-  
-  // Sort by LastModified descending
-  const sorted = listResponse.Contents
-    .filter(obj => obj.Key.includes('ingrosmart-') && obj.Key.endsWith('.csv'))
-    .sort((a, b) => b.LastModified - a.LastModified);
-  
-  if (sorted.length <= keepCount) {
-    return;
-  }
-  
-  // Delete oldest files
-  const toDelete = sorted.slice(keepCount);
-  
-  for (const obj of toDelete) {
-    const deleteCommand = new DeleteObjectCommand({
-      Bucket: s3Config.bucket,
-      Key: obj.Key
-    });
-    
-    await client.send(deleteCommand);
-    logger.debug(`Deleted S3 history file: ${obj.Key}`);
-  }
-  
-  logger.info(`Pruned ${toDelete.length} old S3 history files`);
+  // Non più necessaria con il nuovo sistema  
+  logger.debug('S3 pruning skipped - using rotating backups');
 }
