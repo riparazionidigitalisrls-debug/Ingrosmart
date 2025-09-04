@@ -64,4 +64,4 @@ COPY . .
 RUN mkdir -p output/history screenshots
 
 # Run the agent
-CMD ["node", "src/agent.js"]
+CMD ["sh", "-c", "node src/agent.js; exit 0"]
