@@ -1,0 +1,30 @@
+services:
+  - type: cron
+    name: ingrosmart-agent
+    env: node
+    runtime: node
+    plan: starter
+    region: frankfurt
+    schedule: "*/30 * * * *"
+    buildCommand: "npm ci && npx playwright install --with-deps chromium"
+    startCommand: "node src/agent.js"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: INGRO_BASE_URL
+        sync: false
+      - key: INGRO_LOGIN_URL
+        sync: false
+      - key: INGRO_EXPORT_URL
+        sync: false
+      - key: INGRO_USER
+        sync: false
+      - key: INGRO_PASS
+        sync: false
+      - key: TARGET
+        sync: false
+      - key: LOG_LEVEL
+        value: info
+      - key: KEEP_HISTORY
+        value: 10
+    autoDeploy: true

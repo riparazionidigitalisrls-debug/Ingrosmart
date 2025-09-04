@@ -1,0 +1,32 @@
+{
+  "name": "ingrosmart-agent",
+  "version": "1.0.0",
+  "description": "Automated CSV downloader for IngroSmart catalog with Playwright",
+  "main": "src/agent.js",
+  "type": "module",
+  "scripts": {
+    "fetch": "node src/agent.js",
+    "test:local": "node src/agent.js --once",
+    "test:components": "node test/test-components.js",
+    "debug": "LOG_LEVEL=debug node src/agent.js --once"
+  },
+  "keywords": [
+    "ingrosmart",
+    "csv",
+    "playwright",
+    "automation",
+    "web-scraping"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.478.0",
+    "axios": "^1.6.3",
+    "dotenv": "^16.3.1",
+    "form-data": "^4.0.0",
+    "playwright": "^1.40.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
