@@ -50,17 +50,18 @@ COPY package*.json ./
 # Install npm dependencies
 RUN npm ci || npm install
 
+# Set Playwright browsers path
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
 # Install Playwright with Chromium
-RUN npx playwright install chromium
+RUN mkdir -p /ms-playwright && \
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright npx playwright install chromium
 
 # Copy all source files
 COPY . .
 
 # Create output directories
 RUN mkdir -p output/history screenshots
-
-# Set environment for Playwright
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
 # Run the agent
 CMD ["node", "src/agent.js"]
