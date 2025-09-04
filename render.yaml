@@ -5,7 +5,7 @@ services:
     runtime: node
     plan: starter
     region: frankfurt
-    schedule: "*/30 * * * * *"
+    schedule: "*/30 * * * *"
     buildCommand: "npm ci && npx playwright install --with-deps chromium"
     startCommand: "node src/agent.js"
     envVars:
