@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  ingrosmart-agent:
+    build: .
+    container_name: ingrosmart-agent
+    environment:
+      - NODE_ENV=production
+      - INGRO_BASE_URL=https://www.ingrosmart.it
+      - INGRO_LOGIN_URL=https://www.ingrosmart.it/customer/account/login/
+      - INGRO_EXPORT_URL=https://www.ingrosmart.it/datacomcontroller/agent/productExport/
+      - INGRO_USER=${INGRO_USER}
+      - INGRO_PASS=${INGRO_PASS}
+      - TARGET=fs
+      - LOG_LEVEL=info
+      - KEEP_HISTORY=10
+    volumes:
+      - ./output:/app/output
+      - ./screenshots:/app/screenshots
+    command: node src/agent.js

@@ -1,0 +1,28 @@
+services:
+  - type: cron
+    name: ingrosmart-agent-docker
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    region: frankfurt
+    schedule: "*/30 * * * *"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: INGRO_BASE_URL
+        value: https://www.ingrosmart.it
+      - key: INGRO_LOGIN_URL
+        value: https://www.ingrosmart.it/customer/account/login/
+      - key: INGRO_EXPORT_URL
+        value: https://www.ingrosmart.it/datacomcontroller/agent/productExport/
+      - key: INGRO_USER
+        sync: false
+      - key: INGRO_PASS
+        sync: false
+      - key: TARGET
+        value: fs
+      - key: LOG_LEVEL
+        value: info
+      - key: KEEP_HISTORY
+        value: "10"
+    autoDeploy: true
