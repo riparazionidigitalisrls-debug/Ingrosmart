@@ -178,7 +178,7 @@ async function downloadCsv(page) {
   try {
     // Use page.request to make authenticated request with cookies
     const response = await page.request.get(config.exportUrl, {
-      timeout: 60000,
+      timeout: 90000,
       maxRedirects: 3
     });
     
